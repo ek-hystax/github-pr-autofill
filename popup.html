@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PR Description Filler Settings</title>
+    <style>
+      body {
+        width: 300px;
+        padding: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+          Arial, sans-serif;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #2da44e;
+        color: white;
+        border: 1px solid rgba(27, 31, 36, 0.15);
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background-color: #2c974b;
+      }
+      .status {
+        margin-top: 8px;
+        display: none;
+        color: #1a7f37;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-group">
+      <label for="issueBaseUrl">Issue Base URL:</label>
+      <input
+        type="text"
+        id="issueBaseUrl"
+        placeholder="https://yourdomain.atlassian.net/browse/"
+      />
+    </div>
+    <button id="save">Save Settings</button>
+    <div id="status" class="status">Settings saved!</div>
+    <script src="popup.js"></script>
+  </body>
+</html>

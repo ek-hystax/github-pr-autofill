@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub PR Filler",
+  "version": "1.0",
+  "description": "Automatically fills the PR",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/compare/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": ["https://github.com/*"]
+}
