@@ -1,3 +1,14 @@
+const assignToSelf = () => {
+  const assignYourselfButton = document.querySelector(
+    'button.js-issue-assign-self[name="issue[user_assignee_ids][]"]'
+  );
+  if (assignYourselfButton) {
+    assignYourselfButton.click();
+    return true;
+  }
+  return false;
+};
+
 const getIssueNumberFromBranch = () => {
   // Try to get the branch name from the compare branch selector
   const branchElement = document.querySelector(
@@ -84,9 +95,9 @@ const addFillButton = () => {
 
   const fillPRButton = createFillPRButton();
 
-  // Add click handler
   fillPRButton.addEventListener("click", async (event) => {
     await fillPRBody(event);
+    assignToSelf();
   });
 
   createPrButton.parentElement.insertBefore(fillPRButton, createPrButton);
