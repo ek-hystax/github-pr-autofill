@@ -29,24 +29,20 @@ const retryOperation = (
   });
 };
 
-const closeLabelsPopup = async () => {
+const closePopup = async ({ menuId }) => {
   const attemptToClose = async () => {
-    const menu = document.querySelector("#labels-select-menu");
+    const menu = document.querySelector(`#${menuId}`);
 
     // Already closed
     if (!menu || !menu.hasAttribute("open")) {
       return true;
     }
 
-    const closeButton = document.querySelector(
-      'button[data-toggle-for="labels-select-menu"]'
-    );
-
-    if (!closeButton) {
+    if (menu.hasAttribute("open")) {
+      const summaryButton = document.querySelector(`#${menuId} summary`);
+      summaryButton.click();
       return true;
     }
-
-    closeButton.click();
 
     // Return false to continue retrying
     return false;
@@ -60,17 +56,17 @@ const closeLabelsPopup = async () => {
   return true;
 };
 
-const openLabelsPopup = async () => {
-  const labelsButton = document.querySelector("#labels-select-menu summary");
-  if (!labelsButton) {
+const openPopup = async ({ menuId, filterFieldId }) => {
+  const summary = document.querySelector(`#${menuId} summary`);
+  if (!summary) {
     throw new Error("Labels button not found");
   }
 
-  labelsButton.click();
+  summary.click();
 
   const waitForMenuToOpen = async () => {
     const filterableContent = document.querySelector(
-      '[data-filterable-for="label-filter-field"]'
+      `[data-filterable-for="${filterFieldId}"]`
     );
     return !!filterableContent;
   };
@@ -85,20 +81,22 @@ const openLabelsPopup = async () => {
   return true;
 };
 
-const selectLabels = async (labels) => {
+const selectPopupItems = async ({ menuId, labelSpanClassName, labels }) => {
   const attemptToSelectLabels = async () => {
-    // Handle both single string and array of labels
     const labelArray = Array.isArray(labels) ? labels : [labels];
-    const foundLabels = labelArray.map((label) =>
-      document.querySelector(`label[data-prio-filter-value="${label}"]`)
-    );
 
-    // Check if all labels were found
-    if (!foundLabels.every((label) => label !== null)) {
+    const allLabels = document.querySelectorAll(
+      `#${menuId} details-menu label`
+    );
+    const foundLabels = Array.from(allLabels).filter((label) => {
+      const span = label.querySelector(`span.${labelSpanClassName}`);
+      return span && labelArray.includes(span.textContent.trim());
+    });
+
+    if (foundLabels.length === 0) {
       return false;
     }
 
-    // Select each label
     foundLabels.forEach((labelElement) => {
       const checkbox = labelElement.querySelector('input[type="checkbox"]');
       if (checkbox) {
@@ -229,10 +227,33 @@ const addFillButton = () => {
   fillPRButton.addEventListener("click", async (event) => {
     await fillPRBody(event);
     assignToSelf();
+
     try {
-      await openLabelsPopup();
-      await selectLabels(["ui"]);
-      await closeLabelsPopup();
+      await openPopup({
+        menuId: "reviewers-select-menu",
+        filterFieldId: "review-filter-field",
+      });
+      await selectPopupItems({
+        menuId: "reviewers-select-menu",
+        labelSpanClassName: "js-username",
+        labels: [],
+      });
+      await closePopup({ menuId: "reviewers-select-menu" });
+    } catch (error) {
+      console.log("Failed to handle reviewers:", error.message);
+    }
+
+    try {
+      await openPopup({
+        menuId: "labels-select-menu",
+        filterFieldId: "label-filter-field",
+      });
+      await selectPopupItems({
+        menuId: "labels-select-menu",
+        labelSpanClassName: "js-label-name-html",
+        labels: ["ui"],
+      });
+      await closePopup({ menuId: "labels-select-menu" });
     } catch (error) {
       console.log("Failed to handle labels:", error.message);
     }
