@@ -1,123 +1,125 @@
-const closeLabelsPopup = () => {
+const retryOperation = (
+  operation,
+  { maxRetries = 5, retryInterval = 200 } = {}
+) => {
   return new Promise((resolve, reject) => {
     let retryCount = 0;
-    const maxRetries = 5;
-    const retryInterval = 200;
 
-    const attemptToCloseAndVerify = () => {
-      const menu = document.querySelector("#labels-select-menu");
+    const attempt = async () => {
+      try {
+        const result = await operation();
+        if (result) {
+          resolve(true);
+          return;
+        }
 
-      if (!menu || !menu.hasAttribute("open")) {
-        resolve(true);
-        return;
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          resolve(false);
+          return;
+        }
+
+        setTimeout(attempt, retryInterval);
+      } catch (error) {
+        reject(error);
       }
-
-      const closeButton = document.querySelector(
-        'button[data-toggle-for="labels-select-menu"]'
-      );
-
-      if (!closeButton) {
-        resolve(true);
-        return;
-      }
-
-      closeButton.click();
-
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        reject(new Error("Popup did not close after max retries"));
-        return;
-      }
-
-      setTimeout(attemptToCloseAndVerify, retryInterval);
     };
 
-    // Start checking
-    attemptToCloseAndVerify();
+    attempt();
   });
 };
 
-const openLabelsPopup = () => {
-  return new Promise((resolve, reject) => {
-    const labelsButton = document.querySelector("#labels-select-menu summary");
-    if (!labelsButton) {
-      return reject(new Error("Labels button not found"));
+const closeLabelsPopup = async () => {
+  const attemptToClose = async () => {
+    const menu = document.querySelector("#labels-select-menu");
+
+    // Already closed
+    if (!menu || !menu.hasAttribute("open")) {
+      return true;
     }
 
-    labelsButton.click();
+    const closeButton = document.querySelector(
+      'button[data-toggle-for="labels-select-menu"]'
+    );
 
-    let retryCount = 0;
-    const maxRetries = 5;
-    const retryInterval = 1000;
+    if (!closeButton) {
+      return true;
+    }
 
-    const checkForContent = () => {
-      const filterableContent = document.querySelector(
-        '[data-filterable-for="label-filter-field"]'
-      );
+    closeButton.click();
 
-      if (filterableContent) {
-        resolve(true);
-        return;
-      }
+    // Return false to continue retrying
+    return false;
+  };
 
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        reject(new Error("Popup content not loaded after max retries"));
-        return;
-      }
+  const success = await retryOperation(attemptToClose);
+  if (!success) {
+    throw new Error("Failed to close labels popup after max retries");
+  }
 
-      setTimeout(checkForContent, retryInterval);
-    };
-
-    // Start checking
-    checkForContent();
-  });
+  return true;
 };
 
-const selectLabels = (labels) => {
-  return new Promise((resolve, reject) => {
-    let retryCount = 0;
-    const maxRetries = 5;
-    const retryInterval = 1000;
+const openLabelsPopup = async () => {
+  const labelsButton = document.querySelector("#labels-select-menu summary");
+  if (!labelsButton) {
+    throw new Error("Labels button not found");
+  }
 
-    const trySelectLabels = () => {
-      // Handle both single string and array of labels
-      const labelArray = Array.isArray(labels) ? labels : [labels];
-      const foundLabels = labelArray.map((label) =>
-        document.querySelector(`label[data-prio-filter-value="${label}"]`)
-      );
+  labelsButton.click();
 
-      // Check if all labels were found
-      if (foundLabels.every((label) => label !== null)) {
-        // Select each label
-        foundLabels.forEach((labelElement) => {
-          const checkbox = labelElement.querySelector('input[type="checkbox"]');
-          if (checkbox) {
-            console.log("Found checkbox for label, clicking it");
-            checkbox.checked = true;
-            checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-        });
+  const waitForMenuToOpen = async () => {
+    const filterableContent = document.querySelector(
+      '[data-filterable-for="label-filter-field"]'
+    );
+    return !!filterableContent;
+  };
 
-        // Wait a bit for the label selections to register
-        setTimeout(() => {
-          resolve(true);
-        }, 300);
-        return;
-      }
-
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        reject(new Error("One or more labels not found after max retries"));
-        return;
-      }
-
-      setTimeout(trySelectLabels, retryInterval);
-    };
-
-    // Start trying to select the labels
-    trySelectLabels();
+  const success = await retryOperation(waitForMenuToOpen, {
+    retryInterval: 1000,
   });
+  if (!success) {
+    throw new Error("Popup content not loaded after max retries");
+  }
+
+  return true;
+};
+
+const selectLabels = async (labels) => {
+  const attemptToSelectLabels = async () => {
+    // Handle both single string and array of labels
+    const labelArray = Array.isArray(labels) ? labels : [labels];
+    const foundLabels = labelArray.map((label) =>
+      document.querySelector(`label[data-prio-filter-value="${label}"]`)
+    );
+
+    // Check if all labels were found
+    if (!foundLabels.every((label) => label !== null)) {
+      return false;
+    }
+
+    // Select each label
+    foundLabels.forEach((labelElement) => {
+      const checkbox = labelElement.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    // Wait a bit for the label selections to register
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return true;
+  };
+
+  const success = await retryOperation(attemptToSelectLabels, {
+    retryInterval: 1000,
+  });
+  if (!success) {
+    throw new Error("One or more labels not found after max retries");
+  }
+
+  return true;
 };
 
 const assignToSelf = () => {
