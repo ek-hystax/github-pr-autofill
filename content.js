@@ -131,34 +131,57 @@ const assignToSelf = () => {
   return false;
 };
 
-const getIssueNumberFromBranch = () => {
+const getBranchInfo = () => {
   // Try to get the branch name from the compare branch selector
   const branchElement = document.querySelector(
     "#head-ref-selector .css-truncate"
   );
 
-  if (branchElement) {
-    const branchName = branchElement.textContent.trim();
-    // Match pattern like "improvement/OS-7087"
-    const issueMatch = branchName.match(/\w+\/(\w+-\d+)/);
-    if (issueMatch) {
-      return issueMatch[1];
-    }
+  if (!branchElement) {
+    return {
+      branchName: "",
+      issueType: "",
+      issueNumber: "",
+      isValid: false,
+    };
   }
 
-  return "***"; // Fallback if no issue number found
+  const branchName = branchElement.textContent.trim();
+  // Match pattern like "feature/OS-1234" or "bugfix/PROJ-5678"
+  const branchMatch = branchName.match(/^([^/]+)\/([A-Z]+-\d+)$/);
+
+  if (!branchMatch) {
+    return {
+      branchName,
+      issueType: "",
+      issueNumber: "",
+      isValid: false,
+    };
+  }
+
+  return {
+    branchName,
+    issueType: branchMatch[1],
+    issueNumber: branchMatch[2],
+    isValid: true,
+  };
 };
 
 const getIssueLinkFromBranch = async () => {
-  const issueNumber = getIssueNumberFromBranch();
+  const branchInfo = getBranchInfo();
+
   const result = await chrome.storage.sync.get(["issueBaseUrl"]);
   const baseUrl = result.issueBaseUrl;
 
-  if (!baseUrl) {
-    return issueNumber;
+  if (!branchInfo.isValid) {
+    return baseUrl;
   }
 
-  return `${baseUrl}${issueNumber}`;
+  if (!baseUrl) {
+    return branchInfo.issueNumber;
+  }
+
+  return `${baseUrl}${branchInfo.issueNumber}`;
 };
 
 const fillPRBody = async () => {
