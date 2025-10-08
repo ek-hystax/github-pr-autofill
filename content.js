@@ -131,6 +131,17 @@ const assignToSelf = () => {
   return false;
 };
 
+const getLabels = () => {
+  const branchInfo = getBranchInfo();
+  const labels = ["ui"]; // Always add "ui" label
+
+  if (branchInfo.isValid && branchInfo.issueType.toLowerCase() === "bug") {
+    labels.push("bug");
+  }
+
+  return labels;
+};
+
 const getBranchInfo = () => {
   // Try to get the branch name from the compare branch selector
   const branchElement = document.querySelector(
@@ -283,7 +294,7 @@ const addFillButton = () => {
       await selectPopupItems({
         menuId: "labels-select-menu",
         labelSpanClassName: "js-label-name-html",
-        labels: ["ui"],
+        labels: getLabels(),
       });
       await closePopup({ menuId: "labels-select-menu" });
     } catch (error) {
