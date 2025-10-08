@@ -229,16 +229,25 @@ const addFillButton = () => {
     assignToSelf();
 
     try {
-      await openPopup({
-        menuId: "reviewers-select-menu",
-        filterFieldId: "review-filter-field",
-      });
-      await selectPopupItems({
-        menuId: "reviewers-select-menu",
-        labelSpanClassName: "js-username",
-        labels: [],
-      });
-      await closePopup({ menuId: "reviewers-select-menu" });
+      // Get saved reviewers from storage
+      const result = await chrome.storage.sync.get(["reviewersList"]);
+      const reviewersList =
+        result.reviewersList && Array.isArray(result.reviewersList)
+          ? result.reviewersList
+          : [];
+
+      if (reviewersList.length > 0) {
+        await openPopup({
+          menuId: "reviewers-select-menu",
+          filterFieldId: "review-filter-field",
+        });
+        await selectPopupItems({
+          menuId: "reviewers-select-menu",
+          labelSpanClassName: "js-username",
+          labels: reviewersList,
+        });
+        await closePopup({ menuId: "reviewers-select-menu" });
+      }
     } catch (error) {
       console.log("Failed to handle reviewers:", error.message);
     }
