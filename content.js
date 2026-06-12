@@ -133,18 +133,48 @@ const assignToSelf = () => {
 
 const getLabels = async () => {
   const branchInfo = getBranchInfo();
-  const result = await chrome.storage.sync.get(["labelsList"]);
-  const labels = result.labelsList && Array.isArray(result.labelsList)
-    ? [...result.labelsList]
-    : [];
+  const result = await chrome.storage.sync.get([
+    "labelsList",
+    "conditionalLabels",
+  ]);
 
-  if (branchInfo.isValid && branchInfo.issueType.toLowerCase() === "bug") {
-    if (!labels.includes("bug")) {
-      labels.push("bug");
-    }
+  const labels =
+    result.labelsList && Array.isArray(result.labelsList)
+      ? [...result.labelsList]
+      : [];
+
+  const conditionalLabels =
+    result.conditionalLabels && Array.isArray(result.conditionalLabels)
+      ? result.conditionalLabels
+      : [];
+
+  for (const rule of conditionalLabels) {
+    if (!rule.branchPattern || !rule.label || labels.includes(rule.label)) continue;
+
+    const branchValue =
+      rule.field === "Base branch"
+        ? getBaseBranchName()
+        : branchInfo.branchName;
+    const branch = branchValue.toLowerCase();
+    const pattern = rule.branchPattern.toLowerCase();
+    const operator = rule.operator ?? "contains";
+
+    const matches =
+      operator === "starts with"
+        ? branch.startsWith(pattern)
+        : operator === "ends with"
+          ? branch.endsWith(pattern)
+          : branch.includes(pattern);
+
+    if (matches) labels.push(rule.label);
   }
 
   return labels;
+};
+
+const getBaseBranchName = () => {
+  const el = document.querySelector("#base-ref-selector .css-truncate");
+  return el ? el.textContent.trim() : "";
 };
 
 const getBranchInfo = () => {

@@ -41,10 +41,79 @@ const addLabelField = (value = "") => {
   );
 };
 
+const FIELDS = ["Branch name", "Base branch"];
+const OPERATORS = ["contains", "starts with", "ends with"];
+
+const createConditionalLabelField = ({ label = "", branchPattern = "", field = "Branch name", operator = "contains" } = {}) => {
+  const card = document.createElement("div");
+  card.className = "conditional-rule-card";
+
+  const header = document.createElement("div");
+  header.className = "conditional-rule-header";
+
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.className = "conditional-label-name";
+  labelInput.placeholder = "Label name";
+  labelInput.value = label;
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "btn btn-filled-error";
+  deleteButton.textContent = "x";
+  deleteButton.addEventListener("click", () => card.remove());
+
+  header.appendChild(labelInput);
+  header.appendChild(deleteButton);
+
+  const condition = document.createElement("div");
+  condition.className = "conditional-rule-condition";
+
+  const ifKeyword = document.createElement("span");
+  ifKeyword.className = "query-keyword";
+  ifKeyword.textContent = "if";
+
+  const fieldSelect = document.createElement("select");
+  fieldSelect.className = "query-select conditional-label-field";
+  FIELDS.forEach((f) => {
+    const option = new Option(f, f);
+    option.selected = f === field;
+    fieldSelect.appendChild(option);
+  });
+
+  const operatorSelect = document.createElement("select");
+  operatorSelect.className = "query-select conditional-label-operator";
+  OPERATORS.forEach((op) => {
+    const option = new Option(op, op);
+    option.selected = op === operator;
+    operatorSelect.appendChild(option);
+  });
+
+  const patternInput = document.createElement("input");
+  patternInput.type = "text";
+  patternInput.className = "conditional-label-pattern";
+  patternInput.placeholder = "pattern";
+  patternInput.value = branchPattern;
+
+  condition.appendChild(ifKeyword);
+  condition.appendChild(fieldSelect);
+  condition.appendChild(operatorSelect);
+  condition.appendChild(patternInput);
+
+  card.appendChild(header);
+  card.appendChild(condition);
+  return card;
+};
+
+const addConditionalLabelField = (rule = {}) => {
+  const container = document.getElementById("conditional-label-fields");
+  container.appendChild(createConditionalLabelField(rule));
+};
+
 // Load saved settings when popup opens
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.sync.get(
-    ["issueBaseUrl", "reviewersList", "labelsList"],
+    ["issueBaseUrl", "reviewersList", "labelsList", "conditionalLabels"],
     (result) => {
       if (result.issueBaseUrl) {
         document.getElementById("issueBaseUrl").value = result.issueBaseUrl;
@@ -63,6 +132,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!result.labelsList || result.labelsList.length === 0) {
         addLabelField();
       }
+
+      if (result.conditionalLabels && Array.isArray(result.conditionalLabels)) {
+        result.conditionalLabels.forEach((rule) => addConditionalLabelField(rule));
+      }
     }
   );
 
@@ -72,6 +145,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("add-label").addEventListener("click", () => {
     addLabelField();
+  });
+
+  document.getElementById("add-conditional-label").addEventListener("click", () => {
+    addConditionalLabelField();
   });
 
   document.getElementById("save").addEventListener("click", () => {
@@ -87,12 +164,26 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((input) => input.value.trim())
       .filter(Boolean);
 
-    chrome.storage.sync.set({ issueBaseUrl, reviewersList, labelsList }, () => {
-      const status = document.getElementById("status");
-      status.style.display = "block";
-      setTimeout(() => {
-        status.style.display = "none";
-      }, 2000);
-    });
+    const conditionalLabels = Array.from(
+      document.querySelectorAll(".conditional-rule-card")
+    )
+      .map((card) => ({
+        label: card.querySelector(".conditional-label-name").value.trim(),
+        field: card.querySelector(".conditional-label-field").value,
+        operator: card.querySelector(".conditional-label-operator").value,
+        branchPattern: card.querySelector(".conditional-label-pattern").value.trim(),
+      }))
+      .filter((rule) => rule.label && rule.branchPattern);
+
+    chrome.storage.sync.set(
+      { issueBaseUrl, reviewersList, labelsList, conditionalLabels },
+      () => {
+        const status = document.getElementById("status");
+        status.style.display = "block";
+        setTimeout(() => {
+          status.style.display = "none";
+        }, 2000);
+      }
+    );
   });
 });
