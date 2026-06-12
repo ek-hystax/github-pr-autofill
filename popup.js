@@ -1,11 +1,11 @@
-const createReviewerField = (value = "") => {
+const createInputField = ({ placeholder, inputClassName, value = "" }) => {
   const field = document.createElement("div");
   field.className = "reviewer-field";
 
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "reviewer-input";
-  input.placeholder = "Enter reviewer username";
+  input.className = inputClassName;
+  input.placeholder = placeholder;
   input.value = value;
 
   const deleteButton = document.createElement("button");
@@ -21,49 +21,75 @@ const createReviewerField = (value = "") => {
 
 const addReviewerField = (value = "") => {
   const container = document.getElementById("reviewer-fields");
-  container.appendChild(createReviewerField(value));
+  container.appendChild(
+    createInputField({
+      placeholder: "Enter reviewer username",
+      inputClassName: "reviewer-input",
+      value,
+    })
+  );
+};
+
+const addLabelField = (value = "") => {
+  const container = document.getElementById("label-fields");
+  container.appendChild(
+    createInputField({
+      placeholder: "Enter label name",
+      inputClassName: "label-input",
+      value,
+    })
+  );
 };
 
 // Load saved settings when popup opens
 document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.sync.get(["issueBaseUrl", "reviewersList"], (result) => {
-    if (result.issueBaseUrl) {
-      document.getElementById("issueBaseUrl").value = result.issueBaseUrl;
-    }
+  chrome.storage.sync.get(
+    ["issueBaseUrl", "reviewersList", "labelsList"],
+    (result) => {
+      if (result.issueBaseUrl) {
+        document.getElementById("issueBaseUrl").value = result.issueBaseUrl;
+      }
 
-    // Add reviewer fields for existing reviewers
-    if (result.reviewersList && Array.isArray(result.reviewersList)) {
-      result.reviewersList.forEach((reviewer) => addReviewerField(reviewer));
-    }
+      if (result.reviewersList && Array.isArray(result.reviewersList)) {
+        result.reviewersList.forEach((reviewer) => addReviewerField(reviewer));
+      }
+      if (!result.reviewersList || result.reviewersList.length === 0) {
+        addReviewerField();
+      }
 
-    // Add one empty field if no reviewers
-    if (!result.reviewersList || result.reviewersList.length === 0) {
-      addReviewerField();
+      if (result.labelsList && Array.isArray(result.labelsList)) {
+        result.labelsList.forEach((label) => addLabelField(label));
+      }
+      if (!result.labelsList || result.labelsList.length === 0) {
+        addLabelField();
+      }
     }
-  });
+  );
 
-  // Add reviewer button click handler
   document.getElementById("add-reviewer").addEventListener("click", () => {
     addReviewerField();
   });
 
-  // Save settings when button is clicked
+  document.getElementById("add-label").addEventListener("click", () => {
+    addLabelField();
+  });
+
   document.getElementById("save").addEventListener("click", () => {
     const issueBaseUrl = document.getElementById("issueBaseUrl").value.trim();
 
-    // Get all reviewer values as an array
-    const reviewerInputs = document.querySelectorAll(".reviewer-input");
-    const reviewersList = Array.from(reviewerInputs)
+    const reviewersList = Array.from(
+      document.querySelectorAll(".reviewer-input")
+    )
       .map((input) => input.value.trim())
       .filter(Boolean);
 
-    // Save to Chrome storage
-    chrome.storage.sync.set({ issueBaseUrl, reviewersList }, () => {
-      // Show success message
+    const labelsList = Array.from(document.querySelectorAll(".label-input"))
+      .map((input) => input.value.trim())
+      .filter(Boolean);
+
+    chrome.storage.sync.set({ issueBaseUrl, reviewersList, labelsList }, () => {
       const status = document.getElementById("status");
       status.style.display = "block";
-
-      // Hide message after 2 seconds
       setTimeout(() => {
         status.style.display = "none";
       }, 2000);

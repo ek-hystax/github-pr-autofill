@@ -131,12 +131,17 @@ const assignToSelf = () => {
   return false;
 };
 
-const getLabels = () => {
+const getLabels = async () => {
   const branchInfo = getBranchInfo();
-  const labels = ["ui"]; // Always add "ui" label
+  const result = await chrome.storage.sync.get(["labelsList"]);
+  const labels = result.labelsList && Array.isArray(result.labelsList)
+    ? [...result.labelsList]
+    : [];
 
   if (branchInfo.isValid && branchInfo.issueType.toLowerCase() === "bug") {
-    labels.push("bug");
+    if (!labels.includes("bug")) {
+      labels.push("bug");
+    }
   }
 
   return labels;
@@ -287,16 +292,19 @@ const addFillButton = () => {
     }
 
     try {
-      await openPopup({
-        menuId: "labels-select-menu",
-        filterFieldId: "label-filter-field",
-      });
-      await selectPopupItems({
-        menuId: "labels-select-menu",
-        labelSpanClassName: "js-label-name-html",
-        labels: getLabels(),
-      });
-      await closePopup({ menuId: "labels-select-menu" });
+      const labels = await getLabels();
+      if (labels.length > 0) {
+        await openPopup({
+          menuId: "labels-select-menu",
+          filterFieldId: "label-filter-field",
+        });
+        await selectPopupItems({
+          menuId: "labels-select-menu",
+          labelSpanClassName: "js-label-name-html",
+          labels,
+        });
+        await closePopup({ menuId: "labels-select-menu" });
+      }
     } catch (error) {
       console.log("Failed to handle labels:", error.message);
     }
