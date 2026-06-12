@@ -1,6 +1,6 @@
 const retryOperation = (
   operation,
-  { maxRetries = 5, retryInterval = 200 } = {}
+  { maxRetries = 5, retryInterval = 200 } = {},
 ) => {
   return new Promise((resolve, reject) => {
     let retryCount = 0;
@@ -66,7 +66,7 @@ const openPopup = async ({ menuId, filterFieldId }) => {
 
   const waitForMenuToOpen = async () => {
     const filterableContent = document.querySelector(
-      `[data-filterable-for="${filterFieldId}"]`
+      `[data-filterable-for="${filterFieldId}"]`,
     );
     return !!filterableContent;
   };
@@ -86,7 +86,7 @@ const selectPopupItems = async ({ menuId, labelSpanClassName, labels }) => {
     const labelArray = Array.isArray(labels) ? labels : [labels];
 
     const allLabels = document.querySelectorAll(
-      `#${menuId} details-menu label`
+      `#${menuId} details-menu label`,
     );
     const foundLabels = Array.from(allLabels).filter((label) => {
       const span = label.querySelector(`span.${labelSpanClassName}`);
@@ -122,7 +122,7 @@ const selectPopupItems = async ({ menuId, labelSpanClassName, labels }) => {
 
 const assignToSelf = () => {
   const assignYourselfButton = document.querySelector(
-    'button.js-issue-assign-self[name="issue[user_assignee_ids][]"]'
+    'button.js-issue-assign-self[name="issue[user_assignee_ids][]"]',
   );
   if (assignYourselfButton) {
     assignYourselfButton.click();
@@ -145,7 +145,7 @@ const getLabels = () => {
 const getBranchInfo = () => {
   // Try to get the branch name from the compare branch selector
   const branchElement = document.querySelector(
-    "#head-ref-selector .css-truncate"
+    "#head-ref-selector .css-truncate",
   );
 
   if (!branchElement) {
@@ -197,7 +197,7 @@ const getIssueLinkFromBranch = async () => {
 
 const fillPRBody = async () => {
   const prBodyTextarea = document.querySelector(
-    'textarea[name="pull_request[body]"], textarea#pull_request_body'
+    'textarea[name="pull_request[body]"], textarea#pull_request_body',
   );
 
   if (prBodyTextarea) {
@@ -245,7 +245,7 @@ const createFillPRButton = () =>
 
 const addFillButton = () => {
   const createPrButton = document.querySelector(
-    'button[type="submit"][data-disable-with]'
+    'button[type="submit"][data-disable-with]',
   );
 
   if (!createPrButton?.parentElement) {
