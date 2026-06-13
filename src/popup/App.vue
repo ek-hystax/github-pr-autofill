@@ -143,15 +143,22 @@ onMounted(() => {
     (result) => {
       if (result.issueBaseUrl) issueBaseUrl.value = result.issueBaseUrl;
 
-      reviewersList.value = result.reviewersList?.length
-        ? result.reviewersList.map((v) => newItem(v))
+      const reviewers = Array.isArray(result.reviewersList)
+        ? result.reviewersList
+        : [];
+      reviewersList.value = reviewers.length
+        ? reviewers.map((v) => newItem(v))
         : [newItem()];
 
-      labelsList.value = result.labelsList?.length
-        ? result.labelsList.map((v) => newItem(v))
+      const labels = Array.isArray(result.labelsList) ? result.labelsList : [];
+      labelsList.value = labels.length
+        ? labels.map((v) => newItem(v))
         : [newItem()];
 
-      conditionalLabels.value = (result.conditionalLabels ?? []).map((r) => ({
+      const conditional = Array.isArray(result.conditionalLabels)
+        ? result.conditionalLabels
+        : [];
+      conditionalLabels.value = conditional.map((r) => ({
         id: crypto.randomUUID(),
         ...r,
       }));
@@ -177,6 +184,13 @@ function save() {
         })),
     },
     () => {
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Failed to save settings:",
+          chrome.runtime.lastError.message,
+        );
+        return;
+      }
       saved.value = true;
       setTimeout(() => {
         saved.value = false;
