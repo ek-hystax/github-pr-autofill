@@ -1,44 +1,48 @@
 # GitHub PR Autofill
 
-A Chrome extension that automates filling GitHub Pull Request forms based on branch naming conventions and predefined configuration.
+Chrome extension (Manifest V3) that autofills GitHub PR forms from branch naming conventions. Built with Vite + Vue 3 + `@crxjs/vite-plugin`.
 
-## Overview
+## Setup
 
-The extension integrates with the GitHub Pull Request creation page and provides a **“Fill PR”** button.  
-When triggered, it extracts metadata from the current branch name and applies configured settings to populate PR fields automatically.
+```sh
+pnpm install
+pnpm build       # outputs to dist/
+pnpm dev         # watch mode
+```
 
-## Features
+Load `dist/` as an unpacked extension in `chrome://extensions`.
 
-- **Branch Name Parsing** – Extracts issue identifiers from branch names (e.g., `feature/PROJ-1234`, `bugfix/APP-567`).
-- **Template-Based Description** – Inserts a PR description template.
-- **Automatic Reviewer Assignment** – Adds reviewers specified in the extension settings.
-- **Assignee Handling** – Optionally assigns the PR author automatically.
-- **Configurable Settings** – Supports customization of issue tracker URLs and reviewer lists through the settings panel.
+## How it works
 
-## Workflow
+Injects a **Fill PR** button on `github.com/*/compare/*`. On click it:
 
-1. Navigate to GitHub’s Pull Request comparison page.
-2. Click the **“Fill PR”** button added by the extension.
-3. The extension performs the following actions:
-   - Parses the source branch name.
-   - Extracts the issue key (if available).
-   - Populates the PR title and description based on the issue key and template.
-   - Assigns reviewers according to configured rules.
+1. Parses the source branch (`type/PROJ-1234` → extracts issue key)
+2. Populates the PR body with an issue link (`issueBaseUrl + issueKey`)
+3. Assigns the PR to the current user
+4. Applies configured reviewers and labels via DOM interaction with GitHub's sidebar menus
 
 ## Configuration
 
-Settings are available in the extension options page:
+Managed via the extension popup:
 
-- **Issue Tracker URL** – Base URL for linking issue keys (e.g., JIRA, Linear).
-- **Default Reviewers** – List of GitHub usernames to assign automatically.
+| Setting | Description |
+|---|---|
+| Issue Base URL | Prepended to the extracted issue key (e.g. `https://yourorg.atlassian.net/browse/`) |
+| Reviewers | GitHub usernames auto-assigned on fill |
+| Labels | Labels always applied |
+| Conditional Labels | Labels applied when branch name or base branch matches a pattern (`contains` / `starts with` / `ends with`) |
 
-## Requirements
+Settings are persisted in `chrome.storage.sync`.
 
-- Chrome browser
-- GitHub account with access to the relevant repositories
-- Branch naming convention following the pattern `type/issue_key`
+## Project structure
 
-## Notes
-
-- The extension operates client-side via DOM interaction; it does not modify GitHub server behavior.
-- Intended for teams that maintain consistent branch naming and PR formatting practices.
+```
+src/
+  content/index.js   # content script — DOM interaction, branch parsing
+  popup/
+    index.html
+    main.js
+    App.vue          # settings UI (Vue 3 SFC)
+manifest.json
+vite.config.js
+```

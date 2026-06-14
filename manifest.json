@@ -5,12 +5,12 @@
   "description": "Automatically fills the PR",
   "permissions": ["storage"],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup/index.html"
   },
   "content_scripts": [
     {
       "matches": ["https://github.com/*/compare/*"],
-      "js": ["content.js"]
+      "js": ["src/content/index.js"]
     }
   ],
   "host_permissions": ["https://github.com/*"]

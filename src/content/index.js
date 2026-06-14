@@ -38,13 +38,12 @@ const closePopup = async ({ menuId }) => {
       return true;
     }
 
-    if (menu.hasAttribute("open")) {
-      const summaryButton = document.querySelector(`#${menuId} summary`);
+    const summaryButton = document.querySelector(`#${menuId} summary`);
+    if (summaryButton) {
       summaryButton.click();
-      return true;
     }
 
-    // Return false to continue retrying
+    // Return false to retry and verify the menu closed
     return false;
   };
 
@@ -149,7 +148,8 @@ const getLabels = async () => {
       : [];
 
   for (const rule of conditionalLabels) {
-    if (!rule.branchPattern || !rule.label || labels.includes(rule.label)) continue;
+    if (!rule.branchPattern || !rule.label || labels.includes(rule.label))
+      continue;
 
     const branchValue =
       rule.field === "Base branch"

@@ -1,0 +1,21 @@
+{
+  "name": "github-pr-autofill",
+  "version": "1.0.0",
+  "description": "Chrome extension that autofills GitHub PR forms",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.6.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.0.16"
+  },
+  "dependencies": {
+    "vue": "^3.5.38"
+  }
+}
